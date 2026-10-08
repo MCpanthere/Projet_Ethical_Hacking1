@@ -1,6 +1,6 @@
 <?php
 // php/contact.php
-$conn = new mysqli("localhost", "root", "", "projet_eh");
+$conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nom = $_POST['nom'];
