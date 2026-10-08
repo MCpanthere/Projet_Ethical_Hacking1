@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+            <meta charset="UTF-8">
+            <title>Connexion</title>
+            <link rel="stylesheet" href="../css/style.css">
+    </head>
+    <body>
+        <h1>Connexion</h1>
+
+        <nav>
+            <a href="index.html">Menu</a>
+            <a href="contact.html">Nous contacter</a>
+        </nav>
+
+            <form action="login.php" method="POST">
+                <label for="nom">Nom</label>
+                <input type="text" id="nom" name="nom" required>
+
+                <label for="mot_de_passe">Mot de passe</label>
+                <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+
+                <button type="submit">Se connecter</button>
+            </form>
+    </body>
+</html>
