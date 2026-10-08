@@ -4,7 +4,7 @@ session_start();
 // C'est ce cookie précis que l'attaquant cherchera à voler avec le XSS
 setcookie("session_id", "admin_secret_token_999", time() + 3600, "/");
 
-$conn = new mysqli("localhost", "root", "", "projet_eh");
+$conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
 $result = $conn->query("SELECT * FROM messages ORDER BY date_envoi DESC");
 ?>
 <!DOCTYPE html>
