@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sujet = $_POST['sujet'];
     $message = $_POST['message'];;
 
-    $sql = "INSERT INTO messages (nom, sujet, message) VALUES ('$nom', '$sujet', $message)";
+    $sql = "INSERT INTO messages (nom, sujet, message) VALUES ('$nom', '$sujet', '$message')";
     
     if ($conn->query($sql) === TRUE) {
         // Succès : on propose de revenir à l'accueil
