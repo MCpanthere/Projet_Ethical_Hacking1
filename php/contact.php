@@ -7,6 +7,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sujet = $_POST['sujet'];
     $message = $_POST['message'];;
 
+    $nom = $conn->real_escape_string($_POST['nom']);
+    $sujet = $conn->real_escape_string($_POST['sujet']);
+    $message = $conn->real_escape_string($_POST['message']);
     $sql = "INSERT INTO messages (nom, sujet, message) VALUES ('$nom', '$sujet', $message)";
     
     if ($conn->query($sql) === TRUE) {
@@ -19,6 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
