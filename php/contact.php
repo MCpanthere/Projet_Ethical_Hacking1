@@ -5,10 +5,9 @@ $conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nom = $_POST['nom'];
     $sujet = $_POST['sujet'];
-    $message = $_POST['message'];
+    $message = $_POST['message'];;
 
-    // Insertion vulnérable en base
-    $sql = "INSERT INTO messages (nom, sujet, message) VALUES ('$nom', '$sujet', '$message')";
+    $sql = "INSERT INTO messages (nom, sujet, message) VALUES ('$nom', '$sujet', $message)";
     
     if ($conn->query($sql) === TRUE) {
         // Succès : on propose de revenir à l'accueil
