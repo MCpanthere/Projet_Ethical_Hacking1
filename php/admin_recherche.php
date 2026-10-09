@@ -4,7 +4,7 @@ if(!isset($_COOKIE['session_id']) || $_COOKIE['session_id'] !== 'admin_secret_to
     die("<h1>Accès refusé.</h1><p>Vous devez être administrateur pour voir cette page.</p>");
 }
 
-$conn = new mysqli("localhost", "root", "", "projet_eh");
+$conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
 ?>
 <!DOCTYPE html>
 <html lang="fr">
