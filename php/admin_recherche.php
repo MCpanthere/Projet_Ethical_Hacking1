@@ -1,5 +1,7 @@
 <?php
 // VÉRIFICATION DE SESSION : L'attaquant doit posséder ce cookie volé pour accéder à cette page
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 if(!isset($_COOKIE['session_id']) || $_COOKIE['session_id'] !== 'admin_secret_token_999') {
     die("<h1>Accès refusé.</h1><p>Vous devez être administrateur pour voir cette page.</p>");
 }
