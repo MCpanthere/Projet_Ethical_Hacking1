@@ -1,9 +1,15 @@
 CREATE DATABASE IF NOT EXISTS projet_eh;
 USE projet_eh;
 
-CREATE TABLE IF NOT EXISTS utilisateurs (
+-- La table des comptes est recréée à chaque import : sans cela, réimporter ce
+-- script sur une base existante ajoutait des doublons (anciens mots de passe en
+-- clair + nouveaux hachages) et la connexion échouait.
+-- Pour mettre à jour une base existante SANS la recréer : sql/migration_hash_mots_de_passe.sql
+DROP TABLE IF EXISTS utilisateurs;
+
+CREATE TABLE utilisateurs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    identifiant VARCHAR(50) NOT NULL,
+    identifiant VARCHAR(50) NOT NULL UNIQUE,
     mot_de_passe VARCHAR(255) NOT NULL,   -- hachage bcrypt (password_hash), jamais en clair
     role VARCHAR(20) DEFAULT 'user',
     num_securite_sociale VARCHAR(15)

@@ -50,6 +50,22 @@ protection uniquement côté client serait contournable.
   par variables d'environnement), au lieu de `new mysqli(...)` répété avec le mot
   de passe en clair dans chaque page.
 
+## Mise à jour de la base (important)
+
+Les mots de passe sont maintenant **hachés** : une base créée avec la version
+vulnérable (mots de passe en clair) ne permet plus de se connecter tant qu'elle
+n'est pas mise à jour. Deux options :
+
+- **Repartir de zéro** (la table `utilisateurs` est recréée, les messages sont conservés) :
+  `mariadb -u root -p < sql/init_db.sql`
+- **Migrer la base existante sans rien recréer** (hache les mots de passe, supprime
+  les doublons d'identifiant, ajoute une contrainte d'unicité ; relançable sans risque) :
+  `mariadb -u root -p < sql/migration_hash_mots_de_passe.sql`
+
+Comptes de test inchangés : `admin` / `SuperSecretAdmin123!` et `dupont` / `azerty`.
+Si un mot de passe non haché subsiste, `login.php` le signale dans le journal
+d'erreurs PHP/Apache (jamais à l'écran).
+
 ## Preuve avant/après
 
 `tests/poc_remediation.php` rejoue les charges d'attaque sur les motifs d'origine

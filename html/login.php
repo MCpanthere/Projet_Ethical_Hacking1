@@ -21,6 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$nom]);
     $user = $stmt->fetch();
 
+    // Diagnostic : un mot de passe encore stocké en clair ne peut jamais être
+    // validé par password_verify(). On le signale dans le journal serveur
+    // (jamais au visiteur) pour indiquer qu'il faut lancer la migration.
+    if ($user && password_get_info($user['mot_de_passe'])['algo'] === null) {
+        error_log("login : mot de passe non haché pour '" . $user['identifiant']
+            . "' — exécuter sql/migration_hash_mots_de_passe.sql");
+    }
+
     if ($user && password_verify($password, $user['mot_de_passe'])) {
         // Anti-fixation : nouvel identifiant de session à l'élévation de privilège.
         session_regenerate_id(true);
