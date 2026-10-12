@@ -1,20 +1,18 @@
 <?php
-// php/admin_messages.php — back-office : liste des messages (version sécurisée)
-//
-// Remédiation :
-//  - XSS STOCKÉ : chaque champ issu de la base est échappé avec e() /
-//    htmlspecialchars() à l'affichage. Un payload <script> envoyé via le
-//    formulaire de contact s'affiche désormais comme du texte et ne s'exécute pas.
-//  - Accès : réservé à l'admin via la session serveur (require_admin). Plus de
-//    cookie statique "admin_secret_token_999" posé puis vérifié.
-//  - Connexion BDD : via le PDO centralisé.
-require_once __DIR__ . '/../db.php';
-require_once __DIR__ . '/auth.php';
+session_start();
+// On simule que l'admin vient de se connecter
+// C'est ce cookie précis que l'attaquant cherchera à voler avec le XSS
+// CORRECTION (vol de session) : cookie HttpOnly -> illisible par JavaScript (document.cookie),
+// donc impossible à exfiltrer via un XSS ; SameSite=Strict -> non envoyé depuis un site tiers.
+setcookie("session_id", "admin_secret_token_999", [
+    "expires"  => time() + 3600,
+    "path"     => "/",
+    "httponly" => true,
+    "samesite" => "Strict",
+]);
 
-require_admin();
-
-$stmt = $pdo->query('SELECT nom, sujet, message, date_envoi FROM messages ORDER BY date_envoi DESC');
-$messages = $stmt->fetchAll();
+$conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
+$result = $conn->query("SELECT * FROM messages ORDER BY date_envoi DESC");
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -25,17 +23,21 @@ $messages = $stmt->fetchAll();
 <body>
     <h1>Boîte de réception Administrateur</h1>
     <a href="admin_recherche.php">Aller à la recherche d'utilisateurs</a><br><br>
-
-    <?php if ($messages): ?>
-        <?php foreach ($messages as $row): ?>
-            <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-                <b>De :</b> <?= e($row['nom']) ?><br>
-                <b>Sujet :</b> <?= e($row['sujet']) ?><br><br>
-                <b>Message :</b><br><?= nl2br(e($row['message'])) ?>
-            </div>
-        <?php endforeach; ?>
-    <?php else: ?>
-        Aucun message.
-    <?php endif; ?>
+    
+    <?php
+    if ($result && $result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            // CORRECTION (XSS stocké) : chaque champ est échappé avec htmlspecialchars() avant affichage,
+            // le contenu est affiché comme du texte et n'est plus interprété par le navigateur.
+            echo "<div style='border: 1px solid red; padding: 10px; margin-bottom: 10px; background-color: #ffe6e6;'>";
+            echo "<b>De :</b> " . htmlspecialchars($row['nom'], ENT_QUOTES, 'UTF-8') . "<br>";
+            echo "<b>Sujet :</b> " . htmlspecialchars($row['sujet'], ENT_QUOTES, 'UTF-8') . "<br><br>";
+            echo "<b>Message :</b> <br>" . htmlspecialchars($row['message'], ENT_QUOTES, 'UTF-8');
+            echo "</div>";
+        }
+    } else {
+        echo "Aucun message.";
+    }
+    ?>
 </body>
 </html>
