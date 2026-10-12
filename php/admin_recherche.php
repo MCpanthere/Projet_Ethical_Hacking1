@@ -1,12 +1,28 @@
 <?php
-// VÉRIFICATION DE SESSION : L'attaquant doit posséder ce cookie volé pour accéder à cette page
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-if(!isset($_COOKIE['session_id']) || $_COOKIE['session_id'] !== 'admin_secret_token_999') {
-    die("<h1>Accès refusé.</h1><p>Vous devez être administrateur pour voir cette page.</p>");
-}
+// php/admin_recherche.php — recherche d'utilisateurs (version sécurisée)
+//
+// Remédiation :
+//  - SQLi : requête PRÉPARÉE paramétrée ; le terme de recherche ne peut plus
+//    injecter de UNION ni altérer la requête. (La recherche exacte d'origine est
+//    conservée ; un LIKE paramétré serait possible sans rouvrir la faille.)
+//  - Plus d'affichage de la requête ni des erreurs MySQL (display_errors off,
+//    pas d'écho de $conn->error) : on ne guide plus l'attaquant.
+//  - Accès réservé à l'admin via la session serveur (require_admin), plus via le
+//    cookie statique volable.
+//  - Sorties échappées (e()) : les valeurs affichées ne peuvent pas porter de XSS.
+require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/auth.php';
 
-$conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
+require_admin();
+
+$resultats = [];
+$recherche = trim((string)($_GET['recherche'] ?? ''));
+
+if ($recherche !== '') {
+    $stmt = $pdo->prepare('SELECT identifiant, role FROM utilisateurs WHERE identifiant = ?');
+    $stmt->execute([$recherche]);
+    $resultats = $stmt->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -18,39 +34,22 @@ $conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
 <body>
     <h1>Recherche d'utilisateurs (Accès Restreint Admin)</h1>
     <form method="GET" action="">
-        Identifiant : <input type="text" name="recherche">
+        Identifiant : <input type="text" name="recherche" value="<?= e($recherche) ?>">
         <input type="submit" value="Chercher">
     </form>
     <br>
-    
-    <?php
-    if (isset($_GET['recherche']) && !empty($_GET['recherche'])) {
-        $recherche = $_GET['recherche'];
-        
-        // VULNÉRABILITÉ SQLi : Concaténation directe de l'entrée utilisateur
-        $sql = "SELECT identifiant, role FROM utilisateurs WHERE identifiant = '$recherche'";
-        
-        // Ligne décommentée pour t'aider à visualiser la requête lors de tes tests d'injection
-        // echo "<p><i>Requête exécutée : " . $sql . "</i></p>";
 
-        $result = $conn->query($sql);
-
-        if ($result && $result->num_rows > 0) {
-            echo "<h3>Résultats :</h3><ul>";
-            while($row = $result->fetch_assoc()) {
-                // L'affichage direct de 2 colonnes permet facilement l'injection UNION
-                echo "<li>Identifiant : <b>" . $row['identifiant'] . "</b> - Rôle : <b>" . $row['role'] . "</b></li>";
-            }
-            echo "</ul>";
-        } else {
-            // L'erreur MySQL est affichée pour faciliter l'exploitation manuelle
-            if ($conn->error) {
-                echo "<p style='color:red;'>Erreur SQL : " . $conn->error . "</p>";
-            } else {
-                echo "Aucun utilisateur trouvé.";
-            }
-        }
-    }
-    ?>
+    <?php if ($recherche !== ''): ?>
+        <?php if ($resultats): ?>
+            <h3>Résultats :</h3>
+            <ul>
+                <?php foreach ($resultats as $row): ?>
+                    <li>Identifiant : <b><?= e($row['identifiant']) ?></b> - Rôle : <b><?= e($row['role']) ?></b></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php else: ?>
+            Aucun utilisateur trouvé.
+        <?php endif; ?>
+    <?php endif; ?>
 </body>
 </html>

@@ -1,11 +1,20 @@
 <?php
-session_start();
-// On simule que l'admin vient de se connecter
-// C'est ce cookie précis que l'attaquant cherchera à voler avec le XSS
-setcookie("session_id", "admin_secret_token_999", time() + 3600, "/");
+// php/admin_messages.php — back-office : liste des messages (version sécurisée)
+//
+// Remédiation :
+//  - XSS STOCKÉ : chaque champ issu de la base est échappé avec e() /
+//    htmlspecialchars() à l'affichage. Un payload <script> envoyé via le
+//    formulaire de contact s'affiche désormais comme du texte et ne s'exécute pas.
+//  - Accès : réservé à l'admin via la session serveur (require_admin). Plus de
+//    cookie statique "admin_secret_token_999" posé puis vérifié.
+//  - Connexion BDD : via le PDO centralisé.
+require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/auth.php';
 
-$conn = new mysqli("localhost", "app_user", "password123", "projet_eh");
-$result = $conn->query("SELECT * FROM messages ORDER BY date_envoi DESC");
+require_admin();
+
+$stmt = $pdo->query('SELECT nom, sujet, message, date_envoi FROM messages ORDER BY date_envoi DESC');
+$messages = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -16,20 +25,17 @@ $result = $conn->query("SELECT * FROM messages ORDER BY date_envoi DESC");
 <body>
     <h1>Boîte de réception Administrateur</h1>
     <a href="admin_recherche.php">Aller à la recherche d'utilisateurs</a><br><br>
-    
-    <?php
-    if ($result && $result->num_rows > 0) {
-        while($row = $result->fetch_assoc()) {
-            // VULNÉRABILITÉ XSS STOCKÉ : Affichage direct du contenu sans htmlspecialchars()
-            echo "<div style='border: 1px solid red; padding: 10px; margin-bottom: 10px; background-color: #ffe6e6;'>";
-            echo "<b>De :</b> " . $row['nom'] . "<br>";
-            echo "<b>Sujet :</b> " . $row['sujet'] . "<br><br>";
-            echo "<b>Message :</b> <br>" . $row['message']; // C'est ici que le payload JS de l'attaquant s'exécutera
-            echo "</div>";
-        }
-    } else {
-        echo "Aucun message.";
-    }
-    ?>
+
+    <?php if ($messages): ?>
+        <?php foreach ($messages as $row): ?>
+            <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+                <b>De :</b> <?= e($row['nom']) ?><br>
+                <b>Sujet :</b> <?= e($row['sujet']) ?><br><br>
+                <b>Message :</b><br><?= nl2br(e($row['message'])) ?>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        Aucun message.
+    <?php endif; ?>
 </body>
 </html>
